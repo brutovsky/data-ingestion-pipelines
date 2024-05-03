@@ -1,0 +1,67 @@
+timeout: 900s
+
+steps:
+  - id: "Maven Build"
+    name: "gcr.io/cloud-builders/mvn"
+    entrypoint: "bash"
+    args:
+      - -c
+      - |
+        mvn -U -B clean package -P dataflow-runner -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+
+  - id: "Upload JAR to dataflow artifacts bucket"
+    name: "gcr.io/cloud-builders/gcloud"
+    entrypoint: gsutil
+    args:
+      - cp
+      - /workspace/target/${REPO_NAME}-*.jar
+      - gs://${_DATAFLOW_ARTIFACTS_BUCKET}/$REPO_NAME/${BRANCH_NAME}${TAG_NAME}/${REPO_NAME}.jar
+
+  - id: "Get Maven Package Version"
+    name: "gcr.io/cloud-builders/mvn"
+    entrypoint: "bash"
+    args:
+      - -c
+      - mvn help:evaluate -Dexpression=project.version -q -DforceStdout > /workspace/version.txt
+
+  - id: "Create Dataflow Template for CsvToFirestorePipeline"
+    name: "gcr.io/cloud-builders/mvn"
+    entrypoint: "bash"
+    args:
+      - -c
+      - |
+        java -cp ".:/workspace/target/${REPO_NAME}-$(cat /workspace/version.txt).jar" \
+        com.nakytniak.PipelineStarter \
+        --pipelineType=CSV_TO_FIRESTORE \
+        --region=us-central1 \
+        --runner=DataflowRunner \
+        --project=$PROJECT_ID \
+        --enableStreamingEngine=true \
+        --diskSizeGb=40 \
+        --workerMachineType=n1-standard-1 \
+        --maxNumWorkers=2 \
+        --stagingLocation=gs://${_DATAFLOW_ARTIFACTS_BUCKET}/$REPO_NAME/${BRANCH_NAME}${TAG_NAME}/staging/csv-to-firestore-pipeline \
+        --tempLocation=gs://${_DATAFLOW_TEMP_BUCKET}/$REPO_NAME/${BRANCH_NAME}${TAG_NAME}/temp \
+        --templateLocation=gs://${_DATAFLOW_ARTIFACTS_BUCKET}/$REPO_NAME/${BRANCH_NAME}${TAG_NAME}/template/csv-to-firestore-pipeline \
+        --filesToStage=/workspace/target/${REPO_NAME}-$(cat /workspace/version.txt).jar
+
+  - id: "Create Dataflow Template for MySqlToFirestorePipeline"
+    name: "gcr.io/cloud-builders/mvn"
+    entrypoint: "bash"
+    args:
+      - -c
+      - |
+        java -cp ".:/workspace/target/${REPO_NAME}-$(cat /workspace/version.txt).jar" \
+        com.nakytniak.PipelineStarter \
+        --pipelineType=MYSQL_TO_FIRESTORE \
+        --region=us-central1 \
+        --runner=DataflowRunner \
+        --project=$PROJECT_ID \
+        --enableStreamingEngine=true \
+        --diskSizeGb=40 \
+        --workerMachineType=n1-standard-1 \
+        --maxNumWorkers=2 \
+        --stagingLocation=gs://${_DATAFLOW_ARTIFACTS_BUCKET}/$REPO_NAME/${BRANCH_NAME}${TAG_NAME}/staging/mysql-to-firestore-pipeline \
+        --tempLocation=gs://${_DATAFLOW_TEMP_BUCKET}/$REPO_NAME/${BRANCH_NAME}${TAG_NAME}/temp \
+        --templateLocation=gs://${_DATAFLOW_ARTIFACTS_BUCKET}/$REPO_NAME/${BRANCH_NAME}${TAG_NAME}/template/mysql-to-firestore-pipeline \
+        --filesToStage=/workspace/target/${REPO_NAME}-$(cat /workspace/version.txt).jar

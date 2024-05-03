@@ -1,0 +1,27 @@
+{
+  "sourceVendor": "MYSQL",
+  "query": "SELECT * FROM edu_database.students",
+  "sourceTable": "students",
+  "tableMappings": {
+    "INTERNAL_ID": {
+      "name": "id",
+      "type": "INT"
+    },
+    "EMAIL": {
+      "name": "email",
+      "type": "VARCHAR"
+    },
+    "NAME": {
+      "name": "name",
+      "type": "VARCHAR"
+    },
+    "SURNAME": {
+      "name": "surname",
+      "type": "VARCHAR"
+    },
+    "CITY_OF_BIRTH": {
+      "name": "city_of_birth",
+      "type": "VARCHAR"
+    }
+  }
+}
