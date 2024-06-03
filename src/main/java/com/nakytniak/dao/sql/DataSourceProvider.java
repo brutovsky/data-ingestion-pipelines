@@ -27,7 +27,11 @@ public class DataSourceProvider implements Serializable {
 
     private transient volatile DataSource dataSource;
 
-    public DataSource createDataSource() {
+    public DataSourceVendor getDataSourceVendor() {
+        return dataSourceVendor;
+    }
+
+    public DataSource createDataSource(final boolean isSecret) {
         DataSource localRef = dataSource;
         if (localRef == null) {
             synchronized (this) {
@@ -35,18 +39,19 @@ public class DataSourceProvider implements Serializable {
                 localRef = dataSource;
                 if (localRef == null) {
                     log.info("Created DataSource for the vendor: {}", dataSourceVendor);
-                    dataSource = localRef = new HikariDataSource(this.createHikariConfig());
+                    dataSource = localRef = new HikariDataSource(this.createHikariConfig(isSecret));
                 }
             }
         }
         return localRef;
     }
 
-    private HikariConfig createHikariConfig() {
+    private HikariConfig createHikariConfig(final boolean isSecret) {
         final HikariConfig config = new HikariConfig();
-        config.setJdbcUrl(dataSourceVendor.resolveConnectionUrl(getValue(dbName), getValue(dbConnection)));
-        config.setUsername(getValue(username));
-        config.setPassword(getValue(password));
+        config.setJdbcUrl(
+                dataSourceVendor.resolveConnectionUrl(getValue(dbName, isSecret), getValue(dbConnection, isSecret)));
+        config.setUsername(getValue(username, isSecret));
+        config.setPassword(getValue(password, isSecret));
         if (dataSourceVendor.getDriverClassName() != null) {
             config.setDriverClassName(dataSourceVendor.getDriverClassName());
         }

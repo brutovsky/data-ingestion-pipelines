@@ -10,13 +10,15 @@ public class Mapping implements Serializable {
     private DataSourceVendor sourceVendor;
     private String query;
     private String sourceTable;
+    private ConnectionInfo connectionInfo;
     private Map<String, SourceSqlField> tableMappings;
 
-    public Mapping(DataSourceVendor sourceVendor, String query, String sourceTable,
+    public Mapping(DataSourceVendor sourceVendor, String query, String sourceTable, ConnectionInfo connectionInfo,
             Map<String, SourceSqlField> tableMappings) {
         this.sourceVendor = sourceVendor;
         this.query = query;
         this.sourceTable = sourceTable;
+        this.connectionInfo = connectionInfo;
         this.tableMappings = tableMappings;
     }
 
@@ -54,12 +56,21 @@ public class Mapping implements Serializable {
         this.tableMappings = tableMappings;
     }
 
+    public ConnectionInfo getConnectionInfo() {
+        return connectionInfo;
+    }
+
+    public void setConnectionInfo(ConnectionInfo connectionInfo) {
+        this.connectionInfo = connectionInfo;
+    }
+
     @Override
     public String toString() {
         return "Mapping{" +
                 "sourceVendor=" + sourceVendor +
                 ", query='" + query + '\'' +
                 ", sourceTable='" + sourceTable + '\'' +
+                ", connectionInfo=" + connectionInfo +
                 ", tableMappings=" + tableMappings +
                 '}';
     }
